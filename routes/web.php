@@ -76,3 +76,29 @@ Route::post('/form-mahasiswa', function (Request $req) {
     return view('hasil-form', ['data' => $data]);
 
 });
+
+Route::get('/mahasiswa/{nim?}', function (?string $nim = null) {
+    try {
+        $pdo = DB::connection()->getPdo();
+
+        $sql = 'select m.nim,m.nama,m.email,m.usia,p.nama_prodi from mahasiswa as m join program_studi as p on p.id = m.program_studi_id';
+
+        if ($nim !== null) {
+            $sql .= ' where m.nim = :nim';
+        }
+
+        $sql .= ' Order by m.nim';
+
+        $statement = $pdo->prepare($sql);
+        $statement->execute($nim !== null ? ['nim' => $nim] : []);
+
+        $daftarMhs = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        return view('mahasiswa',compact('daftarMhs','nim'));
+
+    } catch (\Throwable $th) {
+        report($th);
+
+        return response('Koneksi Gagal',500);
+    }
+});
